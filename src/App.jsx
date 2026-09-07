@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { FigmaSidebar } from './components/figma/FigmaSidebar';
 import { FigmaCanvas } from './components/figma/FigmaCanvas';
 import { MobileLayout } from './components/app/MobileLayout';
 import { CertificateModal } from './components/common/CertificateModal';
+import { AiMentorChat } from './components/common/AiMentorChat';
 import { CheckCircle2 } from 'lucide-react';
 
 const MainContainer = () => {
   const { currentMode, toastMessage } = useApp();
+
+  // Register PWA Service Worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative overflow-hidden select-none">
@@ -21,6 +31,9 @@ const MainContainer = () => {
 
       {/* Global Certificate Modal */}
       <CertificateModal />
+
+      {/* Floating AI Mentor Chat Widget */}
+      <AiMentorChat />
 
       {/* Dual Mode View Switcher */}
       {currentMode === 'FIGMA_CANVAS' ? (
