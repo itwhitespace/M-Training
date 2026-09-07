@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { FLOW_STEPS } from '../data/modulesData';
 
 const AppContext = createContext(null);
@@ -16,8 +16,78 @@ export const AppProvider = ({ children }) => {
   // Zoom scale in Figma Canvas mode
   const [zoomScale, setZoomScale] = useState(1);
 
-  // Canvas Layout Mode: '1_ROW' (6 cols x 1 row) | '2_COLS' (2 cols x 3 rows) | '3_COLS' (3 cols x 2 rows)
+  // Canvas Layout Mode: '1_ROW' | '2_COLS' | '3_COLS' | 'FREE_DRAG'
   const [canvasLayout, setCanvasLayout] = useState('1_ROW');
+
+  // Dynamic Draggable Positions for 6 Frames on Figma Canvas
+  const [framePositions, setFramePositions] = useState({
+    'onboarding': { x: 60, y: 80 },
+    'module-1': { x: 520, y: 80 },
+    'module-2': { x: 980, y: 80 },
+    'module-3': { x: 1440, y: 80 },
+    'module-4': { x: 1900, y: 80 },
+    'assessment': { x: 2360, y: 80 }
+  });
+
+  // Live Editable Text Content (Syncs live between Canvas and Real App)
+  const [editableContent, setEditableContent] = useState({
+    'onboarding': {
+      title: 'การออกแบบการอบรมครูเรื่อง Digital Citizenship',
+      subtitle: 'โครงการ M-Training พัฒนาสมรรถนะดิจิทัลสำหรับครู รองรับ Mosher & Gottfredson Level 2 & 3',
+      ctaText: 'Chat & Learn Module 1'
+    },
+    'module-1': {
+      title: 'Digital Safety & Legal Risk',
+      subtitle: 'ความปลอดภัย สิทธิความเป็นส่วนตัว และกฎหมายคุ้มครองข้อมูลส่วนบุคคล (PDPA)'
+    },
+    'module-2': {
+      title: 'Emotional Intelligence & Well-being',
+      subtitle: 'การสร้างสมดุลชีวิตและสุขภาวะดิจิทัลสำหรับครูยุคใหม่'
+    },
+    'module-3': {
+      title: 'Digital Creativity & Innovation',
+      subtitle: 'การสร้างสรรค์สื่อนวัตกรรมการสอนดิจิทัล และการใช้ AI อย่างมีจริยธรรม'
+    },
+    'module-4': {
+      title: 'Digital Participation & Agency',
+      subtitle: 'อัตลักษณ์วิชาชีพครู การเป็นพลเมืองดิจิทัลต้นแบบ และการสร้างพลังขับเคลื่อนสังคม'
+    },
+    'assessment': {
+      title: 'แบบประเมินสมรรถนะครูดิจิทัลหลังเรียน',
+      subtitle: 'ประเมินความรู้ 4 โมดูลตามกรอบสมรรถนะ UNESCO'
+    }
+  });
+
+  // Function to update inline text live across all previews
+  const updateEditableText = (stepId, key, newText) => {
+    setEditableContent(prev => ({
+      ...prev,
+      [stepId]: {
+        ...prev[stepId],
+        [key]: newText
+      }
+    }));
+  };
+
+  // Function to update individual frame position on drag
+  const updateFramePosition = (stepId, newX, newY) => {
+    setFramePositions(prev => ({
+      ...prev,
+      [stepId]: { x: Math.max(0, newX), y: Math.max(0, newY) }
+    }));
+  };
+
+  // Reset all frame positions to default row layout
+  const resetFramePositions = () => {
+    setFramePositions({
+      'onboarding': { x: 60, y: 80 },
+      'module-1': { x: 520, y: 80 },
+      'module-2': { x: 980, y: 80 },
+      'module-3': { x: 1440, y: 80 },
+      'module-4': { x: 1900, y: 80 },
+      'assessment': { x: 2360, y: 80 }
+    });
+  };
 
   // User & Progress State
   const [teacherName, setTeacherName] = useState('ครูสมศรี ปัญญาดี');
@@ -28,7 +98,7 @@ export const AppProvider = ({ children }) => {
   const [isCertificateIssued, setIsCertificateIssued] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
-  // Toast Notification state for "Copy Direct Link"
+  // Toast Notification state
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
@@ -36,14 +106,12 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Sync active step with bottom nav tab when switching steps
   const selectStep = (stepId, modeOverride = null) => {
     setActiveStepId(stepId);
     if (modeOverride) {
       setCurrentMode(modeOverride);
     }
     
-    // Map step to appropriate tab in real app
     if (stepId === 'onboarding') setActiveTab('dashboard');
     else if (stepId.startsWith('module-')) setActiveTab('modules');
     else if (stepId === 'assessment') setActiveTab('evaluation');
@@ -83,6 +151,11 @@ export const AppProvider = ({ children }) => {
         setZoomScale,
         canvasLayout,
         setCanvasLayout,
+        framePositions,
+        updateFramePosition,
+        resetFramePositions,
+        editableContent,
+        updateEditableText,
         teacherName,
         setTeacherName,
         schoolName,

@@ -1,15 +1,15 @@
 import React from 'react';
-import { Layout, Smartphone, ZoomIn, ZoomOut, Link, Grid2X2, Grid3X3, Columns, Sparkles } from 'lucide-react';
+import { Layout, Smartphone, ZoomIn, ZoomOut, Link, Grid2X2, Grid3X3, Columns, Move, RefreshCw } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { FLOW_STEPS } from '../../data/modulesData';
 
-export const FigmaTopBar = () => {
-  const { currentMode, switchMode, zoomScale, setZoomScale, canvasLayout, setCanvasLayout, activeStepId, copyDirectLink } = useApp();
+export const FigmaTopBar = ({ zoomIn, zoomOut, resetTransform }) => {
+  const { currentMode, switchMode, zoomScale, setZoomScale, canvasLayout, setCanvasLayout, activeStepId, copyDirectLink, resetFramePositions } = useApp();
 
   const activeStep = FLOW_STEPS.find(s => s.id === activeStepId) || FLOW_STEPS[0];
 
   return (
-    <div className="h-14 bg-white/80 backdrop-blur-md border-b border-indigo-100 px-4 flex items-center justify-between text-slate-800 select-none z-30 relative shadow-sm">
+    <div className="h-14 bg-white/85 backdrop-blur-md border-b border-indigo-100 px-4 flex items-center justify-between text-slate-800 select-none z-30 relative shadow-sm">
       {/* Left: File Title & Status */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
@@ -26,19 +26,22 @@ export const FigmaTopBar = () => {
               </span>
             </div>
             <span className="text-[10px] text-slate-500 block">
-              6-Step Learning Flow • Focused: <strong className="text-indigo-600 font-semibold">{activeStep.shortTitle}</strong>
+              6-Step Flow • Focused: <strong className="text-indigo-600 font-semibold">{activeStep.shortTitle}</strong>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Center: Canvas Layout & Zoom Controls */}
+      {/* Center: Layout Controls & Infinite Zoom/Pan Controls */}
       <div className="hidden lg:flex items-center gap-3">
         {/* Column Grid Layout Selector */}
         <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 text-xs">
-          <span className="text-[10px] font-semibold text-slate-500 px-2 uppercase tracking-wider">Layout:</span>
+          <span className="text-[10px] font-semibold text-slate-500 px-1.5 uppercase tracking-wider">Layout:</span>
           <button
-            onClick={() => setCanvasLayout('1_ROW')}
+            onClick={() => {
+              setCanvasLayout('1_ROW');
+              resetFramePositions();
+            }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all ${canvasLayout === '1_ROW' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
             title="วางเรียง 1 แถวแนวนอน (6 คอลัมน์)"
           >
@@ -46,7 +49,9 @@ export const FigmaTopBar = () => {
             <span>1 แถว</span>
           </button>
           <button
-            onClick={() => setCanvasLayout('2_COLS')}
+            onClick={() => {
+              setCanvasLayout('2_COLS');
+            }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all ${canvasLayout === '2_COLS' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
             title="แสดงเป็น 2 คอลัมน์ (3 แถว)"
           >
@@ -54,39 +59,54 @@ export const FigmaTopBar = () => {
             <span>2 คอลัมน์</span>
           </button>
           <button
-            onClick={() => setCanvasLayout('3_COLS')}
+            onClick={() => {
+              setCanvasLayout('3_COLS');
+            }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all ${canvasLayout === '3_COLS' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
             title="แสดงเป็น 3 คอลัมน์ (2 แถว)"
           >
             <Grid3X3 className="w-3.5 h-3.5" />
             <span>3 คอลัมน์</span>
           </button>
+          <button
+            onClick={() => {
+              setCanvasLayout('FREE_DRAG');
+            }}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all ${canvasLayout === 'FREE_DRAG' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+            title="ลากวางเฟรมอิสระ (Free Drag & Drop)"
+          >
+            <Move className="w-3.5 h-3.5" />
+            <span>ย้ายอิสระ</span>
+          </button>
         </div>
 
-        {/* Zoom Controls */}
+        {/* Zoom & Reset Controls */}
         <div className="flex items-center gap-1 bg-slate-100/90 px-2.5 py-1 rounded-xl border border-slate-200/80 text-xs">
           <button
-            onClick={() => setZoomScale(prev => Math.max(0.4, prev - 0.1))}
+            onClick={() => zoomOut && zoomOut()}
             className="p-1 hover:bg-slate-200 rounded text-slate-600 hover:text-slate-900"
             title="Zoom Out"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="font-mono text-[11px] text-slate-700 w-10 text-center font-semibold">
-            {Math.round(zoomScale * 100)}%
-          </span>
           <button
-            onClick={() => setZoomScale(prev => Math.min(1.4, prev + 0.1))}
+            onClick={() => zoomIn && zoomIn()}
             className="p-1 hover:bg-slate-200 rounded text-slate-600 hover:text-slate-900"
             title="Zoom In"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
+
           <button
-            onClick={() => setZoomScale(1)}
-            className="text-[10px] text-slate-500 hover:text-indigo-600 border-l border-slate-300 pl-1.5 ml-0.5"
+            onClick={() => {
+              resetTransform && resetTransform();
+              resetFramePositions();
+            }}
+            className="text-[10px] text-slate-600 hover:text-indigo-600 border-l border-slate-300 pl-2 ml-1 flex items-center gap-1 font-semibold"
+            title="รีเซ็ตตำแหน่งและระยะซูม"
           >
-            Reset
+            <RefreshCw className="w-3 h-3" />
+            <span>Reset View</span>
           </button>
         </div>
       </div>

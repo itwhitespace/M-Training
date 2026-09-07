@@ -1,100 +1,131 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { FLOW_STEPS } from '../../data/modulesData';
 import { FigmaFrame } from './FigmaFrame';
 import { FlowConnectors } from './FlowConnectors';
+import { FigmaTopBar } from './FigmaTopBar';
 import { useApp } from '../../context/AppContext';
+import { Move, MousePointer, Info } from 'lucide-react';
 
 export const FigmaCanvas = () => {
-  const { activeStepId, selectStep, zoomScale, canvasLayout } = useApp();
-  const canvasRef = useRef(null);
-  const [framePositions, setFramePositions] = useState([]);
+  const { activeStepId, selectStep, canvasLayout, framePositions } = useApp();
 
-  // Calculate layout coordinates for SVG connecting lines dynamically
-  useEffect(() => {
-    const updatePositions = () => {
-      const frameWidth = 380;
-      const frameHeight = 760;
-      const startX = 60;
-      const startY = 80;
+  // Convert framePositions object into an array ordered by FLOW_STEPS
+  const calculateFrameCoords = () => {
+    const frameWidth = 380;
+    const frameHeight = 760;
+    const startX = 60;
+    const startY = 80;
 
-      let cols = 6;
-      let gapX = 140;
-      let gapY = 140;
+    let cols = 6;
+    let gapX = 140;
+    let gapY = 140;
 
-      if (canvasLayout === '2_COLS') {
-        cols = 2;
-        gapX = 160;
-        gapY = 140;
-      } else if (canvasLayout === '3_COLS') {
-        cols = 3;
-        gapX = 140;
-        gapY = 140;
-      }
+    if (canvasLayout === '2_COLS') {
+      cols = 2;
+      gapX = 160;
+      gapY = 140;
+    } else if (canvasLayout === '3_COLS') {
+      cols = 3;
+      gapX = 140;
+      gapY = 140;
+    }
 
-      const positions = FLOW_STEPS.map((_, idx) => {
-        const colIdx = idx % cols;
-        const rowIdx = Math.floor(idx / cols);
-
+    return FLOW_STEPS.map((step, idx) => {
+      // If custom frame position exists, use it
+      if (framePositions[step.id] && canvasLayout === 'FREE_DRAG') {
         return {
-          x: startX + colIdx * (frameWidth + gapX),
-          y: startY + rowIdx * (frameHeight + gapY),
+          id: step.id,
+          x: framePositions[step.id].x,
+          y: framePositions[step.id].y,
           width: frameWidth,
           height: frameHeight
         };
-      });
+      }
 
-      setFramePositions(positions);
-    };
+      // Default column/row grid position
+      const colIdx = idx % cols;
+      const rowIdx = Math.floor(idx / cols);
 
-    updatePositions();
-  }, [canvasLayout]);
-
-  // Determine grid container dimensions & CSS layout class
-  const getLayoutContainerStyle = () => {
-    if (canvasLayout === '2_COLS') {
-      return { minWidth: '1200px', minHeight: '2900px' };
-    } else if (canvasLayout === '3_COLS') {
-      return { minWidth: '1750px', minHeight: '2000px' };
-    }
-    return { minWidth: '3400px', minHeight: '1050px' };
+      return {
+        id: step.id,
+        x: startX + colIdx * (frameWidth + gapX),
+        y: startY + rowIdx * (frameHeight + gapY),
+        width: frameWidth,
+        height: frameHeight
+      };
+    });
   };
 
-  const getFlexGridClass = () => {
-    if (canvasLayout === '2_COLS') return 'grid grid-cols-2 gap-x-40 gap-y-36 max-w-[1100px]';
-    if (canvasLayout === '3_COLS') return 'grid grid-cols-3 gap-x-36 gap-y-36 max-w-[1600px]';
-    return 'flex items-start gap-32';
-  };
+  const computedCoords = calculateFrameCoords();
 
   return (
-    <div className="flex-1 h-[calc(100vh-3.5rem)] figma-bg-grid overflow-auto relative p-8">
-      {/* Zoomable Container */}
-      <div
-        ref={canvasRef}
-        className="relative transition-all duration-300 origin-top-left py-4"
-        style={{
-          transform: `scale(${zoomScale})`,
-          ...getLayoutContainerStyle()
-        }}
-      >
-        {/* SVG Connector lines connecting steps */}
-        <FlowConnectors framePositions={framePositions} canvasLayout={canvasLayout} />
+    <TransformWrapper
+      initialScale={1}
+      minScale={0.3}
+      maxScale={2}
+      centerOnInit={false}
+      limitToBounds={false}
+      panning={{
+        disabled: false,
+        velocityDisabled: false,
+        excluded: ['no-drag', 'cursor-grab', 'cursor-grabbing']
+      }}
+      wheel={{ step: 0.1 }}
+    >
+      {({ zoomIn, zoomOut, resetTransform }) => (
+        <div className="flex flex-col h-screen overflow-hidden">
+          {/* Top Bar with Zoom & Layout controls */}
+          <FigmaTopBar zoomIn={zoomIn} zoomOut={zoomOut} resetTransform={resetTransform} />
 
-        {/* Mobile Frames positioned in selected grid/column layout */}
-        <div className={`${getFlexGridClass()} relative z-10 pl-8 pt-4`}>
-          {FLOW_STEPS.map((step) => {
-            const isFocused = activeStepId === step.id;
+          {/* Infinite Canvas Viewport */}
+          <div className="flex-1 figma-bg-grid overflow-hidden relative cursor-grab active:cursor-grabbing">
+            {/* Instruction Floating Pill Banner */}
+            <div className="absolute top-4 left-4 z-30 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-indigo-100 shadow-lg text-slate-700 text-xs flex items-center gap-2 pointer-events-none">
+              <span className="p-1 rounded-lg bg-indigo-100 text-indigo-700 font-bold">
+                <MousePointer className="w-3.5 h-3.5" />
+              </span>
+              <div>
+                <span className="font-bold text-slate-900 block">Figma Interactive Canvas</span>
+                <span className="text-[10px] text-slate-500">
+                  คลิกลากผืนผ้าใบเพื่อ Pan • Scroll Wheel เพื่อ Zoom • ดับเบิลคลิกข้อความเพื่อ Edit
+                </span>
+              </div>
+            </div>
 
-            return (
-              <FigmaFrame
-                key={step.id}
-                step={step}
-                isFocused={isFocused}
-                onFocus={() => selectStep(step.id)}
-              />
-            );
-          })}
+            <TransformComponent
+              wrapperStyle={{ width: '100%', height: '100%' }}
+              contentStyle={{ width: '3800px', height: '2400px', position: 'relative' }}
+            >
+              {/* Dynamic SVG Flow Lines connecting frame positions */}
+              <FlowConnectors framePositions={computedCoords} canvasLayout={canvasLayout} />
+
+              {/* 6 Mobile Frames rendered at computed (x, y) coordinates */}
+              <div className="relative w-full h-full p-8">
+                {FLOW_STEPS.map((step, idx) => {
+                  const coord = computedCoords[idx];
+                  const isFocused = activeStepId === step.id;
+
+                  return (
+                    <FigmaFrame
+                      key={step.id}
+                      step={step}
+                      isFocused={isFocused}
+                      onFocus={() => selectStep(step.id)}
+                      position={{ x: coord.x, y: coord.y }}
+                      style={{
+                        position: 'absolute',
+                        left: `${coord.x}px`,
+                        top: `${coord.y}px`
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </TransformComponent>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </TransformWrapper>
   );
 };

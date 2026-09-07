@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Award, ArrowRight, ShieldCheck, RefreshCw, FileCheck } from 'lucide-react';
 import { COMPETENCY_POST_TEST } from '../data/modulesData';
 import { useApp } from '../context/AppContext';
+import { EditableText } from '../components/common/EditableText';
 
 export const AssessmentView = () => {
   const { setPostTestScore, setIsCertificateIssued, setShowCertificateModal } = useApp();
@@ -59,9 +60,11 @@ export const AssessmentView = () => {
         <div className="flex items-center gap-1.5 text-amber-700 text-[10px] font-extrabold uppercase tracking-wider mb-1">
           <Award className="w-4 h-4" /> UNESCO Competency Post-Test
         </div>
-        <h2 className="text-base font-extrabold text-slate-900 mb-1">แบบประเมินสมรรถนะครูดิจิทัลหลังเรียน</h2>
+        <h2 className="text-base font-extrabold text-slate-900 mb-1">
+          <EditableText stepId="assessment" fieldKey="title" defaultText="แบบประเมินสมรรถนะครูดิจิทัลหลังเรียน" />
+        </h2>
         <p className="text-xs text-slate-600">
-          ประเมินความรู้ 4 โมดูลตามกรอบสมรรถนะ UNESCO และทฤษฎี Mosher Level 2 & 3 (เกณฑ์ผ่าน 80% เพื่อรับใบรับรอง)
+          <EditableText stepId="assessment" fieldKey="subtitle" defaultText="ประเมินความรู้ 4 โมดูลตามกรอบสมรรถนะ UNESCO และทฤษฎี Mosher Level 2 & 3 (เกณฑ์ผ่าน 80% เพื่อรับใบรับรอง)" multiline />
         </p>
       </div>
 

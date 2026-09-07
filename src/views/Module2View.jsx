@@ -6,6 +6,7 @@ import { VideoPlayer } from '../components/common/VideoPlayer';
 import { ExternalResources } from '../components/common/ExternalResources';
 import { InteractiveQuiz } from '../components/common/InteractiveQuiz';
 import { useApp } from '../context/AppContext';
+import { EditableText } from '../components/common/EditableText';
 
 export const Module2View = () => {
   const content = MODULES_CONTENT['module-2'];
@@ -17,8 +18,12 @@ export const Module2View = () => {
         <div className="flex items-center gap-1.5 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wider mb-1">
           <HeartPulse className="w-4 h-4" /> {content.unescoCompetency}
         </div>
-        <h2 className="text-base font-extrabold text-slate-900 mb-1">Module 2: {content.title}</h2>
-        <p className="text-xs text-slate-600 mb-3">{content.subtitle}</p>
+        <h2 className="text-base font-extrabold text-slate-900 mb-1">
+          Module 2: <EditableText stepId="module-2" fieldKey="title" defaultText={content.title} />
+        </h2>
+        <p className="text-xs text-slate-600 mb-3">
+          <EditableText stepId="module-2" fieldKey="subtitle" defaultText={content.subtitle} multiline />
+        </p>
         <span className="text-[10px] bg-white text-emerald-800 font-mono font-bold px-2.5 py-1 rounded-full border border-emerald-200 shadow-sm inline-block">
           {content.mosherConcept}
         </span>
